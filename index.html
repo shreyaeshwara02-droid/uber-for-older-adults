@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uber</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#111;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px;gap:14px;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+.tabs{display:none}
+.tab{display:none}
+.tab.on{display:none}
+.phone{width:350px;background:#0a0a0a;border-radius:44px;padding:9px;border:1.5px solid #2a2a2a;box-shadow:0 30px 80px rgba(0,0,0,.8);overflow:hidden}
+.screen{background:#000;height:668px;overflow-y:auto;overflow-x:hidden;border-radius:36px;scrollbar-width:none;width:100%;display:flex;flex-direction:column;}
+.screen::-webkit-scrollbar{display:none}
+.btn{background:none;border:none;cursor:pointer;font-family:inherit}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.sc{animation:fi .18s ease;overflow-x:hidden;max-width:100%;flex:1;display:flex;flex-direction:column;}
+</style>
+</head>
+<body>
+<div class="tabs" id="tabs"></div>
+<div class="phone">
+  <div style="height:22px;display:flex;align-items:center;justify-content:center;padding-top:4px">
+    <div style="width:80px;height:6px;background:#1a1a1a;border-radius:6px"></div>
+  </div>
+  <div class="screen" id="screen"></div>
+  <div style="height:20px;display:flex;align-items:center;justify-content:center">
+    <div style="width:100px;height:4px;background:#1a1a1a;border-radius:4px"></div>
+  </div>
+</div>
+<script>
+var PHOTOS={
+  1:"data:image/jpeg;base64,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",
+  2:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCABQAFADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD0miiigAopKr312llavPJ0XoPU0ATSSxxLukdUHqxxUYu7ckATxHPT5hXB6jdXGuFhbF5HU4wB8oP/ANasz7Jd6XHK8gdpDwf89Kz5zX2Z6rS1xvhDXZZ2+x3Wc/wE9vauxq07mbVmLRRSUxC0UUUAJXLeKbtZNT0/SiWH2g5Yr2Gcf411VcfqqBvHdoZPui2+X2IbIqZbFwV2btrbQ2kYhgiWNFGABRcBNh3BMHrmqN3ps1xeiYzARZyV2jP59aTULFbwhGkZCFG08cH8azbNUjNv7eHTUjvrRBvfcoROQxAJGPeussZ/tNjbz4x5savj0yM1x/iKH7F4ZMe8u4lGxmPOcHp711ml5GnwBjkhBmqgRURbooorQyFopKKAFrlPGMAWKS7A+dISo/OuqrD8UIsmnSIxwHUqPr2qKmxpT+Ir6ZqI1bT4b21ZWJADo2fkb+Icd6bMJ2nBjcM3TDhsL71Q8F6dc6doxFwNksshkCHsMAAH8qu3t5dhiioq9twrOTRtG5z/AIlvUudTsdJjO9opfOl/2eOB+pP5V32nA/YISepXNefRaDdP4rWYRs0FwB+87AjqDXpSKERVHQDAqoasyqbC0UUtamQlFFQXEmF296AB7lVOFBY1WmkaUglenQUcdu9IetFguMznjoailgVxyc1YwDSFF9KlwTLVRoqIDCR823B9avxXj8bhlf51DsAPAFBwASaFGwpSuaMUqyjK/kakrKSQxyZHbrWmrBlDDoRmqJFPFUC/mHnrV2U4iY+1ZUR+QNTEyWI7pMenFOkXnioLRv3jA9QankbGPegBuDRg0bjSh6AGkGo3OSF9+akkbkCqNzMUjkcdVUkUgFWbzVYg5zub+grbtTm3T6YrBsYtlsgPVsD8AK3LI5hx3BoA/9k=",
+  3:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCABQAFADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD0miiigApruqKWdgqjqScAUpOBk8CvHfEWuTa7rMqhmNsjlIIhyDjjOO5NJuw0rnrkF3bXDFYLiKUr1COGx+VTV41NpGpaRFDeKxiYNy0b4IHGM16j4b1I6rosFy5BlwUkwMfMOD/j+NKMlLYqUHHc1aKKKogKKKKACiiigDnfHOovpvhm4eIkSzEQqR23dT+Wa838LaW13K8wuBCyD5D/ADr0jx1bQXHhi5+0SbBFiRD6uOAPxzXnPhi48k3CSRb4WIB29VPrWdV2joa0kubU6i+tru/0vyEuQ/DcsBmQdqX4Y37PFf2LnmNllUfXg/qBVfVr+2sdOL243u3C4BUAn+I1H8NtPvIdQlvdgFrLGU56nkEEe2ePz9KikaV7HpdFFFbnMFFFFABUcsgjjLGpKo6lKsYi3uFBY9TjtQBkatpg1gxC8kZ44csIxwpPTJHf86htvD1pbYMI8sE5wAMflWqJEyCrA544NSgcAelDjGS1BSlF6GdLpNtIyl0B2DjPT8qksrNbJTHbyPHD18oH5f8AEfnVxjyajuJVhVWc4GcZpxjGK0ByctzRhk3jB6ipayoLxRPGoRj5h25rUqU09htNbi0UUUxBXP8AiKNWu7BzncC4H0wK6CsHxUjLZwXKc+RKN30PH88VnVV4M0pO00VlcCSOTHyI2M+laiOGXisWFomTLfxdRmpwIlHG7H+9xXPSrckbWOmrR53e5oNKiNlnUfU1T1a7hXT5DvUkFcc98iqklyQpFpbCU9mbhfzpSn2iLbcpGgI+YL3qpYm6tYmOHs73J45dqxSD+Bgf1rpK5ZgnlpDAM5IAA+tdTTw+zFid0LRRRXScoVHLEk0TRyqHRhgqe4qSkoA4nxZHDo9vAbOST7RK/EbncNo6n27Vi2urXwwZBA/oCDip/Ft39p8QTLnKwKIh/M/qaz4mGcGvOqySk+VHo0k3FczNVtUvHXiOIH2JqjcXuoMpwIl+hJqRGAFI7DFYKTNnFHZeG0sLi0W4ghKzKcP5jFiD7E9q3a4Dw1fNY6wqlj5F0RG4P8Lfwn+ld/Xp0ZKUdDza0XGWotFFFamR/9k=",
+  4:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCABQAFADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDBFOApcUoFAxMVFcXCQKM/Mx6KOpp9xJ5MDSdcdPrVGytTdy+ZMx2k8+9JtJXY4xcnZDWubh+QwQegFEd1OmNx3juCK7Ox0CyMa5jZ8juxpuoeH7JELKjJgcYao9ojT2TOehmSdcqeR1HpUmKz7u2ezk8yN8qDgY4x9av28gmgWQd+v1q001dGbi4uzFxRin4oIpgMxS4paWmIqaiP9EP+8KdpoBIBIVR3Jov2VbYq3V+h9xzVFYzv+aPzFYfKGbaBWc1fQ1ptrU9F01oViUC4ViByAc0mpzWpjZWuEUkdCa5HTLC4iuElDqiueituz7E1LqmmyNcySF1YRk8Pn+lY9bG2tuYr3/lsGVWV09jmo9MXFpj0c4quYGdtwijVUGSY+n096s6e+U8sKcAZ3diSelawstDKpeWrLRFJinkUmK0MiOlopRTEQXaI0J8wHb7VY0CSB0USBSQOjClKhhhhkHrWHDKba4ZeQyMR+tZzjc1pzszspru1+1xpPMkQXGxTxn3qSbULQai32e4jdiQNmeWFcoWbVH2zQSAgcBIyxxT0tGsMTQW9wzdmkjx/OsvZm3tPI29auYhEcdWGMVm2flmBPLTbx83PU1mXt60pBkXa/cela1omy0hU9QozWkIWMqk77EmKMUtFamRDThTRThTEOFYmtQiKdJh/y04Ye4rWlnSFdzn6AdTWJqF212QpQKin5fWpbRSg7X6E9pJO+2S1uRDKo796syNfTEPe3qyY7ZrnwzIeDilEsjcFjipsPmZZZvMuuTuGcmukS4hk4SRT9DXPWsYxk1bULtBAweh96TlY2o0VUlZm3SVmxyuvRzU6XZ/jXI9RTVRGs8DUjrHUfuAGScCq0t0ekf5mq7ys/wB4/hTc1Ep32NqOEUdZ6sZISxJJJPvVaQZq3ULpnpUpm9SmpRsU3XNIigHk1OyH0P5U0Ic8L+lXc4HQdyeM4HHSrCckYqvGjHqcfWrSkKOKzbO7D0lDUkHFFM3Zpd1Sdtz/2Q==",
+  5:"data:image/jpeg;base64,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",
+  6:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCABQAFADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDPApwoFOFAgApwFApaAFxTTTZJggrMu7u4uJ0tLDHntyT6CgaVzSLYozms+403WNMg+1SuJk6uM5xU9lcrcwiRcgHqD2NJNPYbi47lsU6minimSRAU4CmgU6gBQKbIcKaeKguGwpoAo3D9eaPDEUtzqk80CguuAM4/rVW9fbEx9BTfDd4bXUynzlJkKkjqp9aip8LNKfxK56BqImu7QRqi+WUPmf1rg9HbaJYiclX4+ldVq2oR6fp3n+YJCI8BEYkFj0z6fSuD0+Ux3C4bJJ59T7VFE0r20R1aHin1DCwZQR3GamzW5zjRS00GnUAOqrdMAp5qSSTaKoTuWOPWgCF7GS7iJDbV/nV3RLCKG+jXIaTBOT2GKu26gRKPbFAi2ukkR2SIcg15ksRKT12PWjhoxWm5a8Xwb9DYxxYKMrMQO3rXCFGikR0J+ZQw46V6Hcak1xZpCy4k/wCWnpj2rGmtYixbYMkfpWkcQo6IylhnPVkFpMJIgwq0GqKZRHswME9aFauynPnjzHFVhyS5SUUpOBTRSOeK0MyGU5quADIoPQ8VI55qB6mSumiou0kzorKy+0W3yyANt6g5wcdf84qJkeJikg2uP19xWlof72ySRNu/GCWGau3ltFNF++iyV5DJk4/rXnTpp7Hpwqtb6nPnqOaaylsKv3m4rX/sixZiIbtz3GTg/TFOj0REkV/tT/KcjpWaotPU0deLWhk6jaGO28xmA24xnue/0+lZqV0es2yR6bPiQyEoQMkVzaniu+grJpHn4h3abJwaa/SloIzXQcxWeoXq06VWkGAaQEllf3lufLtpdq5zgjNbNvq1/tHmCNsjsxFYmnpvnbPQLWjCPlUn0I/WvOrzam0j1cPBOCbNM6pLIMSW0bD/AGnz/Sqk2qX2CIPLjA4KtlvyNRRNujU+1I+M1h7SRv7KJRlvLqXInkJ3dQOBSJS3K8g9waRK9Oi1KCZ5NePLNo//2Q==",
+  user:""
+};
+
+var G='#00C853';
+var SCREEN='home';
+
+var DRIVERS=[
+  {id:1,name:'Daniel R.',rating:4.95,badge:'Care Certified',car:'Blue Honda Civic',plate:'KGF 1234',yourRating:5,note:'Always early, helps with bags'},
+  {id:2,name:'Maria S.',rating:4.88,badge:'Top Driver',car:'Toyota Camry',plate:'ABC 5678',yourRating:5,note:'Very friendly and professional'},
+  {id:3,name:'Priya N.',rating:4.91,badge:'Highly Rated',car:'White Tesla Model 3',plate:'EV 0042',yourRating:4,note:'Clean car, great driver'},
+  {id:4,name:'Marcus T.',rating:4.80,badge:'Senior Pro',car:'Ford Fusion',plate:'XYZ 999',yourRating:4,note:'Smooth and reliable'},
+  {id:5,name:'James K.',rating:4.65,badge:'Highly Rated',car:'Black Hyundai Sonata',plate:'MRK 337',yourRating:3,note:'On time but quiet'},
+  {id:6,name:'Sofia L.',rating:4.82,badge:'Top Driver',car:'Gray Honda Accord',plate:'SFL 222',yourRating:4,note:'Professional and friendly'}
+];
+
+var TRIPS=[
+  {id:1,driverId:1,from:'Home',to:"Dr. Johnson's Office",date:'Apr 8',time:'10:02 AM',fare:14.50,type:'UberX',yourRating:5,duration:'12 min',distance:'2.4 mi'},
+  {id:2,driverId:2,from:"Dr. Johnson's Office",to:'Home',date:'Apr 5',time:'12:35 PM',fare:13.80,type:'Comfort',yourRating:5,duration:'11 min',distance:'2.4 mi'},
+  {id:3,driverId:3,from:'Home',to:'Whole Foods',date:'Apr 2',time:'9:15 AM',fare:8.20,type:'UberX',yourRating:4,duration:'7 min',distance:'1.3 mi'},
+  {id:4,driverId:1,from:'Whole Foods',to:'Home',date:'Apr 2',time:'10:55 AM',fare:8.60,type:'UberX',yourRating:5,duration:'8 min',distance:'1.3 mi'},
+  {id:5,driverId:4,from:'Home',to:"St. Mary's Hospital",date:'Mar 28',time:'8:00 AM',fare:19.40,type:'UberX',yourRating:4,duration:'18 min',distance:'4.1 mi'},
+  {id:6,driverId:5,from:'Downtown Mall',to:'Home',date:'Mar 22',time:'6:45 PM',fare:11.30,type:'UberX',yourRating:3,duration:'14 min',distance:'2.8 mi'},
+  {id:7,driverId:6,from:'Home',to:'City Library',date:'Mar 15',time:'2:30 PM',fare:7.90,type:'UberX',yourRating:4,duration:'9 min',distance:'1.7 mi'},
+  {id:8,driverId:2,from:'City Library',to:'Home',date:'Mar 15',time:'5:10 PM',fare:7.60,type:'UberX',yourRating:5,duration:'9 min',distance:'1.7 mi'}
+];
+
+var RTYPES=[
+  {id:'uberx',label:'Standard',icon:'🚗',desc:'Comfortable everyday ride',price:14.50,eta:8},
+  {id:'comfort',label:'Premium',icon:'🚙',desc:'Newer car, extra room to relax',price:19.80,eta:10},
+  {id:'black',label:'Luxury',icon:'🖤',desc:'Top-rated driver, premium vehicle',price:38.00,eta:15},
+  {id:'uberxl',label:'Large',icon:'🚐',desc:'Fits up to 6 people',price:24.20,eta:12},
+  {id:'pet',label:'Pet-Friendly',icon:'🐾',desc:'Your furry friend is welcome',price:16.00,eta:9},
+  {id:'pool',label:'Shared',icon:'🤝',desc:'Share the ride, save money',price:9.20,eta:6}
+];
+
+var PLACES=['Walmart Supercenter','Whole Foods Market','CVS Pharmacy',
+  "St. Mary's Hospital","Dr. Johnson's Office",'Oak Medical Center',
+  'City Library','Downtown Mall','University of Illinois','Target','Walgreens','YMCA'];
+
+var ST={
+  searchFrom:'123 Oak Street, Champaign',
+  searchTo:'',
+  selectedType:'uberx',
+  showMoreRides:false,
+  editingId:null,
+  formMemberId:null,
+  confirmDelete:null,
+  formPrefs:{frontSeat:true,quiet:true,noRush:false,assisted:false,acOn:false,musicOff:false,childSeat:false,smsOnly:false,senior:true,smsAlert:true,autoNotify:true},
+  replays:[{id:1,name:"Doctor's Office",from:'123 Oak Street',to:"Dr. Johnson's Office",schedule:'Every Thu 10 AM',prefs:{frontSeat:true,quiet:true,noRush:true,assisted:true,acOn:false,musicOff:true,childSeat:false},driverId:1,payment:'card',notes:'Wait at front gate.'}],
+  members:[{id:1,name:'Chris M.',relation:'Mom',age:73,phone:'+1 555-0101',smsOnly:true,address:'123 Oak Street'}],
+  appointments:[{id:1,memberId:1,title:'Heart Check',date:'April 5',time:'10:00 AM',from:'123 Oak Street',to:"Dr. Johnson's Office",senior:true,smsAlert:true,autoNotify:true,driverId:1}],
+  pendingRating:null,ratingGiven:0,quietOn:true,plateVerified:false,trackingDriverId:1
+};
+
+// ── Helpers ──────────────────────────────────────────
+function gD(id){for(var i=0;i<DRIVERS.length;i++){if(DRIVERS[i].id===id)return DRIVERS[i];}return null;}
+function gM(id){for(var i=0;i<ST.members.length;i++){if(ST.members[i].id===id)return ST.members[i];}return null;}
+function gRT(){for(var i=0;i<RTYPES.length;i++){if(RTYPES[i].id===ST.selectedType)return RTYPES[i];}return RTYPES[0];}
+
+function getFam(){
+  var seen={};var max={};
+  for(var i=0;i<TRIPS.length;i++){
+    var t=TRIPS[i];
+    if(!seen[t.driverId])seen[t.driverId]=t;
+    if(!max[t.driverId]||t.yourRating>max[t.driverId])max[t.driverId]=t.yourRating;
+  }
+  var result=[];
+  var keys=Object.keys(seen);
+  for(var i=0;i<keys.length;i++){
+    var id=parseInt(keys[i]);
+    var d=gD(id);
+    if(!d)continue;
+    var tc=0;var lt=null;
+    for(var j=0;j<TRIPS.length;j++){
+      if(TRIPS[j].driverId===id){tc++;if(!lt||TRIPS[j].id>lt.id)lt=TRIPS[j];}
+    }
+    var nd={};
+    for(var k in d)nd[k]=d[k];
+    nd.yourRating=max[id];nd.tripCount=tc;nd.lastTrip=lt;
+    result.push(nd);
+  }
+  result.sort(function(a,b){return b.yourRating-a.yourRating||b.rating-a.rating;});
+  return result;
+}
+
+// Safe text - prevent XSS
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function photoEl(key,size,ring){
+  var src=PHOTOS[key]||'';
+  size=size||48;ring=ring||'';
+  var brd=ring?('border:2.5px solid '+ring+';'):'border:2px solid #2a2a2a;';
+  var d=(typeof key==='number')?gD(key):null;
+  var init=d?esc(d.name.charAt(0)):'C';
+  var imgStyle='width:'+size+'px;height:'+size+'px;border-radius:50%;object-fit:cover;'+brd+'display:'+(src?'block':'none')+';';
+  var fbStyle='width:'+size+'px;height:'+size+'px;border-radius:50%;background:#0d2b18;'+brd+'display:'+(src?'none':'flex')+';align-items:center;justify-content:center;font-size:'+Math.floor(size*.38)+'px;font-weight:800;color:'+G+';';
+  return '<div style="position:relative;width:'+size+'px;height:'+size+'px;flex-shrink:0;">'
+    +(src?'<img style="max-width:100%;" src="'+src+'" style="'+imgStyle+'" onerror="this.style.display=&quot;none&quot;;this.nextSibling.style.display=&quot;flex&quot;">':'')
+    +'<div style="'+fbStyle+'">'+init+'</div>'
+    +'</div>';
+}
+
+function starsHtml(n,sz){
+  sz=sz||13;var s='';
+  for(var i=1;i<=5;i++)s+='<span style="font-size:'+sz+'px;color:'+(i<=n?'#FFB800':'#333')+'">'+(i<=n?'★':'☆')+'</span>';
+  return s;
+}
+
+function pill(t,c,bg){return '<span style="background:'+(bg||'#181818')+';color:'+(c||'#aaa')+';font-size:10px;padding:3px 8px;border-radius:5px;font-weight:600;white-space:nowrap;">'+esc(t)+'</span>';}
+
+function sb(){
+  return '<div style="display:flex;justify-content:space-between;padding:8px 18px 3px;font-size:11px;color:#555;">'
+    +'<span style="font-weight:600;">9:41</span>'
+    +'<div style="display:flex;gap:4px;align-items:center;">'
+    +'<svg width="13" height="9" viewBox="0 0 13 9"><rect x="0" y="3" width="2" height="6" rx=".4" fill="#555"/><rect x="3" y="1.5" width="2" height="7.5" rx=".4" fill="#555"/><rect x="6" y=".5" width="2" height="8.5" rx=".4" fill="#555"/></svg>'
+    +'<svg width="17" height="9" viewBox="0 0 17 9"><rect x="0" y=".5" width="14" height="8" rx="2" stroke="#555" stroke-width="1" fill="none"/><rect x="1" y="1.5" width="9" height="6" rx=".8" fill="#555"/></svg>'
+    +'</div></div>';
+}
+
+function backBtn(s){
+  return '<button class="btn" data-action="go" data-val="'+s+'" style="color:#fff;font-size:13px;display:flex;align-items:center;gap:4px;padding:0;">'
+    +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg>Back</button>';
+}
+
+function hdr(back,title,act){
+  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 16px 14px;">'
+    +backBtn(back)+'<span style="font-size:15px;font-weight:700;">'+esc(title)+'</span>'
+    +'<div>'+(act||'')+'</div></div>';
+}
+
+function togEl(on,key){
+  return '<div class="tog btn" data-pref="'+key+'" style="width:42px;height:24px;background:'+(on?G:'#333')+';border-radius:12px;position:relative;flex-shrink:0;cursor:pointer;">'
+    +'<div style="position:absolute;top:3px;'+(on?'right:3px;':'left:3px;')+'width:18px;height:18px;background:#fff;border-radius:50%;pointer-events:none;"></div></div>';
+}
+
+function inpEl(id,val,ph,type){
+  return '<input type="'+(type||'text')+'" id="'+id+'" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'" '
+    +'style="width:100%;background:#1a1a1a;border:0.5px solid #2a2a2a;border-radius:10px;padding:12px 14px;color:#fff;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">';
+}
+
+function taEl(id,val,ph){
+  return '<textarea id="'+id+'" placeholder="'+esc(ph||'')+'" '
+    +'style="width:100%;background:#1a1a1a;border:0.5px solid #2a2a2a;border-radius:10px;padding:12px 14px;color:#fff;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;height:72px;resize:none;">'+esc(val||'')+'</textarea>';
+}
+
+function selEl(id,opts,selected){
+  var o='';
+  for(var i=0;i<opts.length;i++){
+    o+='<option value="'+esc(opts[i][0])+'"'+(String(selected)===String(opts[i][0])?' selected':'')+'>'+esc(opts[i][1])+'</option>';
+  }
+  return '<select id="'+id+'" style="width:100%;background:#1a1a1a;border:0.5px solid #2a2a2a;border-radius:10px;padding:12px 14px;color:#fff;font-size:13px;outline:none;box-sizing:border-box;font-family:inherit;">'+o+'</select>';
+}
+
+function fld(lbl,html,mb){
+  return '<div style="margin-bottom:'+(mb||13)+'px;"><div style="font-size:10px;color:#555;font-weight:700;letter-spacing:.9px;margin-bottom:6px;">'+lbl+'</div>'+html+'</div>';
+}
+
+function prefRow(key,lbl,prefs){
+  var on=prefs[key];
+  return '<div class="tog btn" data-pref="'+key+'" style="display:flex;align-items:center;gap:10px;padding:10px 13px;background:'+(on?'#0a1c0d':'#141414')+';border-radius:10px;border:0.5px solid '+(on?'#1a3320':'#222')+';cursor:pointer;margin-bottom:7px;">'
+    +'<span style="flex:1;font-size:13px;color:'+(on?'#fff':'#666')+';pointer-events:none;">'+esc(lbl)+'</span>'
+    +'<div style="width:42px;height:24px;background:'+(on?G:'#333')+';border-radius:12px;position:relative;flex-shrink:0;pointer-events:none;">'
+    +'<div style="position:absolute;top:3px;'+(on?'right:3px;':'left:3px;')+'width:18px;height:18px;background:#fff;border-radius:50%;"></div></div></div>';
+}
+
+function simpTog(key,lbl,desc){
+  var on=ST.formPrefs[key];
+  return '<div class="tog btn" data-pref="'+key+'" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:#141414;border-radius:10px;border:0.5px solid #222;margin-bottom:8px;cursor:pointer;">'
+    +'<div style="flex:1;pointer-events:none;"><div style="font-size:13px;font-weight:700;">'+esc(lbl)+'</div>'+(desc?'<div style="font-size:10px;color:#555;margin-top:2px;">'+esc(desc)+'</div>':'')+'</div>'
+    +'<div style="width:42px;height:24px;background:'+(on?G:'#333')+';border-radius:12px;position:relative;flex-shrink:0;pointer-events:none;">'
+    +'<div style="position:absolute;top:3px;'+(on?'right:3px;':'left:3px;')+'width:18px;height:18px;background:#fff;border-radius:50%;"></div></div></div>';
+}
+
+function rPrefs(){
+  var p=ST.formPrefs;
+  return [['frontSeat','🪑 Front seat'],['quiet','🔇 Quiet ride'],['noRush','⏱ No rush'],
+    ['assisted','♿ Assisted boarding'],['acOn','❄ AC preferred'],['musicOff','🎵 Music off'],
+    ['childSeat','👶 Child seat']].map(function(x){return prefRow(x[0],x[1],p);}).join('');
+}
+
+function aPrefs(){
+  var p=ST.formPrefs;
+  return [['senior','👴 Senior Ride'],['smsAlert','📱 Send text updates'],['autoNotify','✅ Auto-notify on arrival']]
+    .map(function(x){return prefRow(x[0],x[1],p);}).join('');
+}
+
+function confBar(type,id,msg){
+  return '<div style="background:#1a0a0a;border-radius:9px;padding:9px 12px;border:0.5px solid #3a1515;margin-bottom:9px;display:flex;align-items:center;gap:8px;">'
+    +'<span style="font-size:12px;color:#e05050;flex:1;">'+esc(msg)+'</span>'
+    +'<button class="btn" data-action="del" data-type="'+type+'" data-id="'+id+'" style="background:#e05050;border:none;border-radius:6px;padding:5px 10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">Delete</button>'
+    +'<button class="btn" data-action="cancelDel" style="background:#2a2a2a;border:none;border-radius:6px;padding:5px 10px;color:#aaa;font-size:11px;cursor:pointer;">Cancel</button>'
+    +'</div>';
+}
+
+// ── SCREENS ──────────────────────────────────────────
+
+function sHome(){
+  var top=getFam().slice(0,3);
+  var r=ST.replays[0];
+  var drv0=r&&gD(r.driverId);
+  var h=sb();
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px 12px;">'
+    +'<div style="font-size:26px;font-weight:900;letter-spacing:-1.5px;">uber</div>'
+    +'<div style="display:flex;gap:8px;align-items:center;"><span style="font-size:12px;color:#555;">Chris</span>'+photoEl('user',34,'#2a2a2a')+'</div></div>';
+  h+='<div style="padding:8px 16px 4px;font-size:12px;color:#555;">Good morning, Chris 👋 Where would you like to go today?</div>';
+  h+='<div style="padding:6px 16px 18px;"><div class="btn" data-action="go" data-val="search" style="background:#1a1a1a;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;border:0.5px solid #2a2a2a;">'
+    +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>'
+    +'<span style="color:#444;font-size:15px;">Where to?</span>'
+    +'<div style="margin-left:auto;background:#111;border-radius:8px;padding:4px 10px;font-size:11px;color:#555;border:0.5px solid #222;">Now ▾</div></div></div>';
+
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 20px;">';
+  var nav=[['🕐','Trip History','See all your past rides','history'],['🔄','Ride Replay','Save trips. Replay them in one tap.','replay_list'],['👨‍👩‍👧','Family Plan','Book a ride for someone you love','family'],['⭐','My Drivers','Request a driver you already trust','familiar_list']];
+  for(var i=0;i<nav.length;i++){
+    h+='<div class="btn" data-action="go" data-val="'+nav[i][3]+'" style="background:#141414;border-radius:16px;padding:16px 14px;cursor:pointer;border:0.5px solid #222;overflow:hidden;min-width:0;">'
+      +'<div style="font-size:28px;margin-bottom:8px;">'+nav[i][0]+'</div>'
+      +'<div style="font-size:14px;font-weight:700;margin-bottom:3px;">'+nav[i][1]+'</div>'
+      +'<div style="font-size:11px;color:#555;line-height:1.4;">'+nav[i][2]+'</div></div>';
+  }
+  h+='</div>';
+
+  if(top.length){
+    h+='<div style="padding:0 16px 18px;"><div style="display:flex;justify-content:space-between;margin-bottom:11px;">'
+      +'<div style="font-size:11px;font-weight:800;color:#666;letter-spacing:.6px;">⭐ YOUR TOP DRIVERS</div>'
+      +'<span class="btn" data-action="go" data-val="familiar_list" style="font-size:11px;color:#444;cursor:pointer;">See all →</span></div>'
+      +'<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:3px;">';
+    for(var i=0;i<top.length;i++){
+      var d=top[i];var fav=d.yourRating>=5;
+      h+='<div class="btn" data-action="go" data-val="familiar_list" style="flex-shrink:0;min-width:88px;background:#141414;border-radius:14px;padding:12px 10px;text-align:center;border:0.5px solid '+(fav?'#1a3320':'#222')+';cursor:pointer;">'
+        +'<div style="position:relative;display:inline-block;margin-bottom:6px;">'+photoEl(d.id,48,fav?G:'#2a2a2a')
+        +(fav?'<div style="position:absolute;bottom:-2px;right:-2px;width:17px;height:17px;background:'+G+';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:#000;font-weight:900;border:2px solid #141414;z-index:2;pointer-events:none;">✓</div>':'')
+        +'</div><div style="font-size:11px;font-weight:700;margin-bottom:2px;">'+esc(d.name.split(' ')[0])+'</div>'
+        +'<div style="font-size:10px;color:'+G+';">★ '+d.yourRating+'/5</div></div>';
+    }
+    h+='</div></div>';
+  }
+
+  if(r){
+    h+='<div style="padding:0 16px 18px;"><div style="display:flex;justify-content:space-between;margin-bottom:10px;">'
+      +'<div style="font-size:11px;font-weight:800;color:#666;letter-spacing:.6px;">🔄 QUICK REPLAY</div>'
+      +'<span class="btn" data-action="go" data-val="replay_list" style="font-size:11px;color:#444;cursor:pointer;">Manage →</span></div>'
+      +'<div style="background:#0a1c0d;border-radius:14px;padding:13px;border:0.5px solid #1a3320;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'
+      +'<div><div style="font-size:15px;font-weight:800;">'+esc(r.name)+'</div><div style="font-size:11px;color:#555;margin-top:2px;">'+esc(r.schedule)+'</div></div>'
+      +(drv0?'<div style="display:flex;align-items:center;gap:7px;">'+photoEl(r.driverId,26,G)+'<span style="font-size:10px;color:'+G+';">'+esc(drv0.name.split(' ')[0])+'</span></div>':'')
+      +'</div>'
+      +'<div style="font-size:12px;color:#666;margin-bottom:3px;">📍 '+esc(r.from)+'</div>'
+      +'<div style="font-size:12px;color:#bbb;margin-bottom:11px;">🏁 '+esc(r.to)+'</div>'
+      +'<button class="btn" data-action="replayBook" style="width:100%;background:'+G+';border:none;border-radius:10px;padding:12px;color:#000;font-size:14px;font-weight:900;cursor:pointer;">One Tap — Replay</button>'
+      +'</div></div>';
+  }
+
+  h+='<div style="padding:0 16px 24px;"><div style="font-size:11px;font-weight:800;color:#666;letter-spacing:.6px;margin-bottom:10px;">📍 SAVED PLACES</div>';
+  var places=[['🏠','Home','123 Oak Street'],['💼','Work','University of Illinois']];
+  for(var i=0;i<places.length;i++){
+    h+='<div class="btn" data-action="startRide" data-val="'+esc(places[i][2])+'" style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid #111;cursor:pointer;">'
+      +'<div style="width:36px;height:36px;background:#1a1a1a;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">'+places[i][0]+'</div>'
+      +'<div><div style="font-size:14px;font-weight:600;">'+places[i][1]+'</div><div style="font-size:11px;color:#555;">'+esc(places[i][2])+'</div></div></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function sSearch(){
+  var h=sb();
+  // Step indicator
+  h+='<div style="padding:8px 16px 4px;"><div style="display:flex;align-items:center;gap:6px;">'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:'+G+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#000;">1</div>'
+    +'<div style="flex:1;height:3px;background:#1a3320;border-radius:2px;"><div style="width:5%;height:100%;background:'+G+';border-radius:2px;"></div></div>'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#555;border:1.5px solid #333;">2</div>'
+    +'<div style="flex:1;height:3px;background:#1a1a1a;border-radius:2px;"></div>'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#555;border:1.5px solid #333;">3</div>'
+    +'<div style="flex:1;height:3px;background:#1a1a1a;border-radius:2px;"></div>'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#555;border:1.5px solid #333;">4</div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;margin-top:5px;padding:0 2px;overflow:hidden;"><span style="font-size:9px;color:'+G+';font-weight:700;white-space:nowrap;overflow:hidden;">Where to?</span><span style="font-size:9px;color:#444;white-space:nowrap;overflow:hidden;">Ride type</span><span style="font-size:9px;color:#444;white-space:nowrap;overflow:hidden;">Driver</span><span style="font-size:9px;color:#444;white-space:nowrap;overflow:hidden;">Confirm</span></div>'
+    +'</div>';
+  h+='<div style="padding:12px 16px 6px;"><div style="font-size:22px;font-weight:800;">Where are you going?</div><div style="font-size:13px;color:#555;margin-top:4px;">Type a destination or pick from below.</div></div>';
+  h+='<div style="padding:0 16px 14px;">'
+    +'<div style="background:#1a1a1a;border-radius:14px;padding:13px 14px;border:1.5px solid '+G+';box-sizing:border-box;width:100%;">'
+    +'<div style="font-size:10px;color:#555;margin-bottom:5px;">FROM</div>'
+    +'<div style="font-size:13px;color:#777;margin-bottom:12px;padding-bottom:12px;border-bottom:0.5px solid #2a2a2a;">'+esc(ST.searchFrom)+'</div>'
+    +'<div style="font-size:10px;color:#555;margin-bottom:6px;">TO — type or pick below</div>'
+    +'<input id="st" value="'+esc(ST.searchTo)+'" style="background:none;border:none;color:#fff;font-size:16px;font-weight:700;font-family:inherit;outline:none;width:100%;" placeholder="e.g. Oak Medical Center">'
+    +'</div></div>';
+  h+='<div id="sugg" style="padding:0 16px;overflow:hidden;">';
+  h+='<div style="font-size:10px;color:#444;font-weight:700;letter-spacing:.8px;margin-bottom:9px;">YOUR RECENT TRIPS</div>';
+  for(var i=0;i<Math.min(3,TRIPS.length);i++){
+    var t=TRIPS[i];
+    h+='<div class="btn" data-action="selectDest" data-idx="'+i+'" style="display:flex;align-items:center;gap:12px;padding:12px;background:#141414;border-radius:12px;margin-bottom:8px;cursor:pointer;border:0.5px solid #222;">'
+      +'<div style="width:38px;height:38px;background:#1a1a1a;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🕐</div>'
+      +'<div><div style="font-size:14px;font-weight:700;color:#fff;">'+esc(t.to)+'</div><div style="font-size:11px;color:#555;">Last visit: '+esc(t.date)+'</div></div>'
+      +'<svg style="margin-left:auto;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>'
+      +'</div>';
+  }
+  h+='<div style="font-size:10px;color:#444;font-weight:700;letter-spacing:.8px;margin:14px 0 9px;">POPULAR NEARBY</div>';
+  for(var i=0;i<5;i++){
+    h+='<div class="btn" data-action="selectPlace" data-idx="'+i+'" style="display:flex;align-items:center;gap:12px;padding:12px;background:#141414;border-radius:12px;margin-bottom:8px;cursor:pointer;border:0.5px solid #222;">'
+      +'<div style="width:38px;height:38px;background:#1a1a1a;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📍</div>'
+      +'<div><div style="font-size:14px;font-weight:700;color:#fff;">'+esc(PLACES[i])+'</div><div style="font-size:11px;color:#555;">Champaign, IL</div></div>'
+      +'<svg style="margin-left:auto;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>'
+      +'</div>';
+  }
+  h+='</div>';
+  // Big sticky Next button
+  h+='<div style="margin-top:auto;background:#000;padding:14px 16px 20px;border-top:0.5px solid #111;box-sizing:border-box;width:100%;">'
+    +'<button class="btn" data-action="go" data-val="ride_options" style="width:100%;background:'+G+';border:none;border-radius:14px;padding:18px;color:#000;font-size:17px;font-weight:900;cursor:pointer;display:block;box-sizing:border-box;">'
+    +'Next — Choose Ride Type →</button></div>';
+  return h;
+}
+
+function sRideOptions(){
+  var to=ST.searchTo||'Your destination';
+  var rt=gRT();
+  var h=sb();
+  // Step indicator
+  h+='<div style="padding:8px 16px 4px;"><div style="display:flex;align-items:center;gap:6px;">'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:#0a2a14;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:'+G+';border:2px solid '+G+';">✓</div>'
+    +'<div style="flex:1;height:3px;background:#1a3320;border-radius:2px;"><div style="width:100%;height:100%;background:'+G+';border-radius:2px;"></div></div>'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:'+G+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#000;">2</div>'
+    +'<div style="flex:1;height:3px;background:#1a1a1a;border-radius:2px;"></div>'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#555;border:1.5px solid #333;">3</div>'
+    +'<div style="flex:1;height:3px;background:#1a1a1a;border-radius:2px;"></div>'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#555;border:1.5px solid #333;">4</div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;margin-top:5px;padding:0 2px;overflow:hidden;"><span style="font-size:9px;color:#555;white-space:nowrap;overflow:hidden;">Where to?</span><span style="font-size:9px;color:'+G+';font-weight:700;white-space:nowrap;overflow:hidden;">Ride type</span><span style="font-size:9px;color:#444;white-space:nowrap;overflow:hidden;">Driver</span><span style="font-size:9px;color:#444;white-space:nowrap;overflow:hidden;">Confirm</span></div>'
+    +'</div>';
+  h+='<div style="padding:10px 16px 6px;">'
+    +'<div style="font-size:22px;font-weight:800;">What kind of ride?</div>'
+    +'<div style="font-size:13px;color:#555;margin-top:4px;">Going to: <span style="color:#fff;font-weight:600;">'+esc(to)+'</span></div></div>';
+  // Default ride — large prominent card
+  h+='<div style="padding:0 16px 10px;">'
+    +'<div class="btn" data-action="selectRide" data-val="'+RTYPES[0].id+'" style="display:flex;align-items:center;gap:12px;padding:14px;background:#0a1c0d;border-radius:16px;border:2px solid '+G+';margin-bottom:10px;cursor:pointer;overflow:hidden;min-width:0;box-sizing:border-box;">'
+    +'<div style="font-size:36px;flex-shrink:0;">'+RTYPES[0].icon+'</div>'
+    +'<div style="flex:1;pointer-events:none;">'
+    +'<div style="display:flex;align-items:center;gap:8px;"><div style="font-size:17px;font-weight:800;">'+RTYPES[0].label+'</div><div style="background:'+G+';color:#000;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;">Most popular</div></div>'
+    +'<div style="font-size:13px;color:#aaa;margin-top:3px;">'+RTYPES[0].desc+'</div>'
+    +'<div style="font-size:12px;color:'+G+';margin-top:4px;">'+RTYPES[0].eta+' min away</div></div>'
+    +'<div style="text-align:right;pointer-events:none;"><div style="font-size:22px;font-weight:900;color:'+G+';">$'+RTYPES[0].price.toFixed(2)+'</div></div></div>';
+  // See more toggle
+  h+='<div class="btn" data-action="toggleMoreRides" style="text-align:center;padding:8px;color:#555;font-size:13px;cursor:pointer;margin-bottom:8px;">'
+    +(ST.showMoreRides?'▲ Show less':'▼ See all ride options')+'</div>';
+  if(ST.showMoreRides){
+    for(var i=1;i<RTYPES.length;i++){
+      var r=RTYPES[i];var sel=ST.selectedType===r.id;
+      h+='<div class="btn" data-action="selectRide" data-val="'+r.id+'" style="display:flex;align-items:center;gap:12px;padding:14px;background:'+(sel?'#0a1c0d':'#141414')+';border-radius:13px;border:'+(sel?'2px solid '+G:'0.5px solid #222')+';margin-bottom:9px;cursor:pointer;overflow:hidden;min-width:0;box-sizing:border-box;">'
+        +'<div style="font-size:28px;flex-shrink:0;">'+r.icon+'</div>'
+        +'<div style="flex:1;pointer-events:none;"><div style="font-size:15px;font-weight:700;">'+r.label+'</div><div style="font-size:12px;color:#666;margin-top:2px;">'+r.desc+'</div><div style="font-size:11px;color:'+G+';margin-top:3px;">'+r.eta+' min away</div></div>'
+        +'<div style="text-align:right;pointer-events:none;"><div style="font-size:16px;font-weight:800;">$'+r.price.toFixed(2)+'</div></div></div>';
+    }
+  }
+  h+='</div>';
+  h+='<div style="margin-top:auto;background:#000;padding:14px 16px 20px;border-top:0.5px solid #111;box-sizing:border-box;width:100%;">'
+    +'<div style="font-size:12px;color:#555;text-align:center;margin-bottom:8px;">Selected: <b style="color:#fff;">'+esc(rt.label)+'</b> — $'+rt.price.toFixed(2)+'</div>'
+    +'<button class="btn" data-action="go" data-val="wizard_driver" style="width:100%;background:'+G+';border:none;border-radius:14px;padding:18px;color:#000;font-size:17px;font-weight:900;cursor:pointer;display:block;box-sizing:border-box;">'
+    +'Next — Choose Your Driver →</button></div>';
+  return h;
+}
+
+function sWizardDriver(){
+  var fam=getFam();
+  var rt=gRT();
+  var h=sb();
+  h+='<div style="padding:8px 16px 4px;"><div style="display:flex;align-items:center;gap:6px;">'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:#0a2a14;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:'+G+';border:2px solid '+G+';">✓</div>'
+    +'<div style="flex:1;height:3px;background:#1a3320;border-radius:2px;"><div style="width:100%;height:100%;background:'+G+';border-radius:2px;"></div></div>'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:#0a2a14;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:'+G+';border:2px solid '+G+';">✓</div>'
+    +'<div style="flex:1;height:3px;background:#1a3320;border-radius:2px;"><div style="width:100%;height:100%;background:'+G+';border-radius:2px;"></div></div>'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:'+G+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#000;">3</div>'
+    +'<div style="flex:1;height:3px;background:#1a1a1a;border-radius:2px;"></div>'
+    +'<div style="width:28px;height:28px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#555;border:1.5px solid #333;">4</div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;margin-top:5px;padding:0 2px;overflow:hidden;"><span style="font-size:9px;color:#555;white-space:nowrap;overflow:hidden;">Where to?</span><span style="font-size:9px;color:#555;white-space:nowrap;overflow:hidden;">Ride type</span><span style="font-size:9px;color:'+G+';font-weight:700;white-space:nowrap;overflow:hidden;">Driver</span><span style="font-size:9px;color:#444;white-space:nowrap;overflow:hidden;">Confirm</span></div>'
+    +'</div>';
+  h+='<div style="padding:10px 16px 6px;"><div style="font-size:22px;font-weight:800;">Your driver</div><div style="font-size:13px;color:#555;margin-top:4px;">We recommend someone you already know and trust.</div></div>';
+  h+='<div style="padding:0 16px 10px;">';
+  if(fam.length){
+    var top=fam[0];
+    // Top familiar driver — big trust card
+    h+='<div style="background:#0a1c0d;border-radius:16px;padding:16px;border:2px solid '+G+';margin-bottom:12px;overflow:hidden;">'
+      +'<div style="font-size:10px;color:'+G+';font-weight:800;letter-spacing:.8px;margin-bottom:10px;">⭐ YOUR MOST TRUSTED DRIVER</div>'
+      +'<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">'
+      +'<div style="position:relative;flex-shrink:0;">'+photoEl(top.id,68,G)
+      +'<div style="position:absolute;bottom:-2px;right:-2px;background:#FFB800;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#000;border:2px solid #0a1c0d;z-index:2;">'+top.yourRating+'</div></div>'
+      +'<div style="flex:1;">'
+      +'<div style="font-size:18px;font-weight:800;margin-bottom:3px;">'+esc(top.name)+'</div>'
+      +'<div style="font-size:12px;color:'+G+';margin-bottom:2px;">★ '+top.rating+' overall · '+esc(top.badge)+'</div>'
+      +'<div style="font-size:12px;color:#777;">'+esc(top.car)+'</div>'
+      +'<div style="display:flex;gap:2px;margin-top:5px;">'+starsHtml(top.yourRating,15)+'<span style="font-size:11px;color:#aaa;margin-left:5px;">you rated them</span></div>'
+      +'</div></div>'
+      +'<button class="btn" data-action="requestDriverConfirm" data-val="'+top.id+'" style="width:100%;background:'+G+';border:none;border-radius:12px;padding:15px;color:#000;font-size:15px;font-weight:900;cursor:pointer;display:block;box-sizing:border-box;">'
+      +'Request '+esc(top.name.split(' ')[0])+' →</button></div>';
+    // Other familiar drivers
+    if(fam.length>1){
+      h+='<div style="font-size:12px;color:#555;font-weight:700;margin-bottom:8px;padding:0 2px;">OR CHOOSE ANOTHER DRIVER YOU KNOW</div>';
+      for(var i=1;i<Math.min(4,fam.length);i++){
+        var d=fam[i];
+        h+='<div class="btn" data-action="requestDriverConfirm" data-val="'+d.id+'" style="display:flex;align-items:center;gap:12px;padding:12px;background:#141414;border-radius:13px;border:0.5px solid #222;margin-bottom:8px;cursor:pointer;">'
+          +photoEl(d.id,46,d.yourRating>=5?G:'#2a2a2a')
+          +'<div style="flex:1;pointer-events:none;"><div style="font-size:14px;font-weight:700;">'+esc(d.name)+'</div>'
+          +'<div style="font-size:11px;color:#555;">'+esc(d.car)+'</div>'
+          +'<div style="display:flex;gap:2px;margin-top:3px;">'+starsHtml(d.yourRating,12)+'</div></div>'
+          +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>'
+          +'</div>';
+      }
+    }
+  }
+  // Any driver option
+  h+='<div class="btn" data-action="go" data-val="confirm_ride" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:#141414;border-radius:13px;border:0.5px dashed #333;cursor:pointer;margin-bottom:10px;">'
+    +'<div style="font-size:13px;color:#666;">Assign me any available driver</div>'
+    +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg></div>';
+  h+='</div>';
+  return h;
+}
+
+function sConfirmRide(){
+  var type=gRT();
+  var fam=getFam();
+  var pref=fam.length?fam[0]:DRIVERS[0];
+  var h=sb()+hdr('ride_options','Confirm ride');
+  h+='<div style="padding:0 16px 20px;">';
+  h+='<div style="background:#141414;border-radius:14px;padding:14px;border:0.5px solid #222;margin-bottom:13px;">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">'
+    +'<div><div style="font-size:16px;font-weight:800;">'+type.icon+' '+esc(type.label)+'</div><div style="font-size:11px;color:#555;margin-top:2px;">'+esc(type.desc)+'</div></div>'
+    +'<div style="text-align:right;"><div style="font-size:22px;font-weight:900;color:'+G+';">$'+type.price.toFixed(2)+'</div><div style="font-size:10px;color:#555;">'+type.eta+' min ETA</div></div></div>'
+    +'<div style="border-top:0.5px solid #222;padding-top:11px;">'
+    +'<div style="font-size:11px;color:#555;margin-bottom:3px;">FROM</div><div style="font-size:13px;margin-bottom:9px;">'+esc(ST.searchFrom)+'</div>'
+    +'<div style="font-size:11px;color:#555;margin-bottom:3px;">TO</div><div style="font-size:13px;font-weight:700;">'+(esc(ST.searchTo)||'Destination')+'</div></div></div>';
+  h+='<div style="background:#0a1c0d;border-radius:14px;padding:13px;border:0.5px solid #1a3320;margin-bottom:13px;">'
+    +'<div style="font-size:10px;color:'+G+';font-weight:700;letter-spacing:.8px;margin-bottom:10px;">YOUR TOP RECOMMENDED DRIVER</div>'
+    +'<div style="display:flex;align-items:center;gap:12px;">'
+    +'<div style="position:relative;flex-shrink:0;">'+photoEl(pref.id,58,G)
+    +'<div style="position:absolute;bottom:0;right:-1px;background:#FFB800;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;border:2px solid #0a1c0d;z-index:2;">'+pref.yourRating+'</div></div>'
+    +'<div style="flex:1;"><div style="font-size:15px;font-weight:800;">'+esc(pref.name)+'</div>'
+    +'<div style="font-size:12px;color:'+G+';margin-top:2px;">★ '+pref.rating+' · '+esc(pref.badge)+'</div>'
+    +'<div style="font-size:11px;color:#555;margin-top:2px;">'+esc(pref.car)+' · '+esc(pref.plate)+'</div>'
+    +'<div style="display:flex;gap:2px;margin-top:4px;">'+starsHtml(pref.yourRating,12)+'<span style="font-size:10px;color:#888;margin-left:4px;">your rating</span></div>'
+    +'</div></div></div>';
+  h+=fld('PAYMENT',selEl('pay-method',[['card','💳 Visa ••4242'],['cash','💵 Cash'],['uber_cash','🟢 Uber Cash'],['apple_pay','🍎 Apple Pay']],'card'),13);
+  h+='<div style="background:#141414;border-radius:12px;padding:12px 14px;border:0.5px solid #222;margin-bottom:14px;">';
+  var rows=[['Base fare','$'+(type.price*.7).toFixed(2)],['Distance and time','$'+(type.price*.25).toFixed(2)],['Service fee','$'+(type.price*.05).toFixed(2)]];
+  for(var i=0;i<rows.length;i++)h+='<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#666;">'+rows[i][0]+'</span><span>'+rows[i][1]+'</span></div>';
+  h+='<div style="border-top:0.5px solid #222;margin:8px 0;padding-top:8px;display:flex;justify-content:space-between;font-size:15px;font-weight:800;"><span>Total</span><span style="color:'+G+';">$'+type.price.toFixed(2)+'</span></div></div>';
+  // Step indicator
+  var stepHtml='<div style="padding:8px 16px 4px;"><div style="display:flex;align-items:center;gap:6px;">'
+    +'<div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#0a2a14;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:'+G+';border:2px solid '+G+';">✓</div>'
+    +'<div style="flex:1;height:3px;background:'+G+';border-radius:2px;"></div>'
+    +'<div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#0a2a14;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:'+G+';border:2px solid '+G+';">✓</div>'
+    +'<div style="flex:1;height:3px;background:'+G+';border-radius:2px;"></div>'
+    +'<div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#0a2a14;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:'+G+';border:2px solid '+G+';">✓</div>'
+    +'<div style="flex:1;height:3px;background:'+G+';border-radius:2px;"></div>'
+    +'<div style="width:24px;height:24px;border-radius:50%;background:'+G+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;">4</div>'
+    +'</div></div>';
+  h=stepHtml+h;
+  h+='<button class="btn" data-action="requestDriverConfirm" data-val="'+pref.id+'" style="width:100%;background:'+G+';border:none;border-radius:14px;padding:18px;color:#000;font-size:17px;font-weight:900;cursor:pointer;display:block;box-sizing:border-box;margin-top:14px;">Confirm Ride — Book Now ✓</button>';
+  h+='<a href="tel:+18005928996" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;padding:14px;background:#1a1a1a;border:0.5px solid #2a2a2a;border-radius:13px;text-decoration:none;box-sizing:border-box;width:100%;overflow:hidden;">'
+    +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+    +'<span style="font-size:12px;font-weight:700;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Need help? Call us — 1-800-592-8996</span></a>';
+  h+='</div>';
+  return h;
+}
+
+function sTracking(){
+  var drv=gD(ST.trackingDriverId)||DRIVERS[0];
+  var h=sb();
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 16px 8px;">'+backBtn('home')+'<span style="font-size:12px;color:#555;">Family tracking live</span><div style="width:40px;"></div></div>';
+  h+='<div style="background:#060f08;height:188px;position:relative;overflow:hidden;">'
+    +'<svg width="100%" height="100%" viewBox="0 0 350 188"><defs><pattern id="g" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#0b1f0e" stroke-width=".7"/></pattern></defs>'
+    +'<rect width="350" height="188" fill="url(#g)"/><rect x="0" y="76" width="350" height="26" fill="#0e220f"/>'
+    +'<rect x="58" y="0" width="26" height="188" fill="#0e220f"/><rect x="198" y="0" width="26" height="188" fill="#0e220f"/>'
+    +'<path d="M 84 162 Q 84 90 116 90 L 198 90 Q 224 90 224 36" fill="none" stroke="'+G+'" stroke-width="3" stroke-dasharray="8,4" opacity=".8"/>'
+    +'<circle cx="84" cy="162" r="12" fill="'+G+'"/><text x="84" y="166" text-anchor="middle" font-size="9" fill="#000" font-weight="900">C</text>'
+    +'<circle cx="140" cy="90" r="6" fill="#fff" opacity=".4"/>'
+    +'<circle cx="224" cy="30" r="10" fill="#e05030"/><text x="224" y="34" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">Dr</text>'
+    +'</svg><div style="position:absolute;top:10px;left:12px;background:rgba(0,200,83,.15);border:0.5px solid '+G+';border-radius:8px;padding:4px 10px;font-size:10px;font-weight:800;color:'+G+';">● LIVE</div></div>';
+  h+='<div style="background:#0a1c0d;padding:10px 16px;border-bottom:0.5px solid #1a3320;">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">'
+    +'<span style="font-size:13px;color:'+G+';font-weight:800;">✓ Your ride is confirmed</span>'
+    +'<span style="font-size:12px;color:#aaa;">ETA <b style="color:#fff;">8 min</b></span></div>'
+    +'<div style="font-size:11px;color:#555;">Check the plate number below when the car arrives, then tap <b style="color:#aaa;">Verify</b>.</div>'
+    +'</div>';
+  h+='<div style="padding:13px 16px;">'
+    +'<div style="background:#141414;border-radius:14px;padding:14px;border:0.5px solid #222;margin-bottom:12px;">'
+    +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+    +'<div style="position:relative;flex-shrink:0;">'+photoEl(drv.id,60,G)
+    +'<div style="position:absolute;bottom:-1px;right:-2px;background:#FFB800;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;border:2.5px solid #141414;z-index:2;">'+drv.yourRating+'</div></div>'
+    +'<div style="flex:1;"><div style="font-size:16px;font-weight:800;">'+esc(drv.name)+'</div>'
+    +'<div style="font-size:12px;color:'+G+';margin-top:2px;">★ '+drv.rating+' · '+esc(drv.badge)+'</div>'
+    +'<div style="display:flex;gap:2px;margin-top:3px;">'+starsHtml(drv.yourRating,12)+'<span style="font-size:10px;color:#888;margin-left:4px;">your rating</span></div></div>'
+    +'<div style="text-align:right;"><div style="font-size:30px;font-weight:900;color:'+G+';line-height:1;">8</div><div style="font-size:10px;color:#555;">min</div></div></div>'
+    +'<div style="background:#1a1a1a;border-radius:10px;padding:10px 13px;display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+    +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>'
+    +'<div style="flex:1;"><div style="font-size:15px;font-weight:900;letter-spacing:2.5px;">'+esc(drv.plate)+'</div><div style="font-size:11px;color:#555;">'+esc(drv.car)+'</div></div>'
+    +'<button class="btn" id="vbtn" data-action="verify" style="background:#0d2b18;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:4px;">'
+    +'<svg width="11" height="11" viewBox="0 0 24 24" fill="'+G+'"><circle cx="12" cy="12" r="10"/><polyline points="20,6 9,17 4,12" stroke="#000" stroke-width="2.5" fill="none"/></svg>'
+    +'<span id="vtxt" style="font-size:10px;color:'+G+';font-weight:800;">Verify</span></button></div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button class="btn" id="qbtn" data-action="quiet" style="flex:1;background:#111;border:0.5px solid #1a3320;border-radius:9px;padding:9px;font-size:11px;color:'+G+';cursor:pointer;">🔇 Quiet: ON</button>'
+    +'<button class="btn" style="flex:1;background:#111;border:0.5px solid #222;border-radius:9px;padding:9px;font-size:11px;color:#aaa;cursor:pointer;">📞 Call</button>'
+    +'<button class="btn" id="sosbtn" data-action="sos" style="background:#1a0808;border:0.5px solid #3a1515;border-radius:9px;padding:9px 13px;font-size:11px;color:#e05050;font-weight:800;cursor:pointer;">SOS</button>'
+    +'</div></div>'
+    +'<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;font-size:10px;color:#333;margin-bottom:5px;"><span>Pickup</span><span>En Route</span><span>Arrived</span></div>'
+    +'<div style="background:#1a1a1a;border-radius:4px;height:4px;"><div style="background:'+G+';width:40%;height:100%;border-radius:4px;"></div></div></div>'
+    +'<button class="btn" data-action="endRide" style="width:100%;background:#e05050;border:none;border-radius:13px;padding:15px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;display:block;box-sizing:border-box;">✓ Complete Ride — Rate Driver</button>'
+    +'</div>'
+    +'<a href="tel:+18005928996" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;padding:12px;background:#1a1a1a;border:0.5px solid #2a2a2a;border-radius:12px;text-decoration:none;box-sizing:border-box;width:100%;overflow:hidden;">'
+    +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+    +'<span style="font-size:12px;font-weight:700;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Need help? Call us — 1-800-592-8996</span></a>'
+    +'</div>';
+  return h;
+}
+
+function sRating(){
+  var drv=ST.pendingRating?gD(ST.pendingRating):DRIVERS[0];
+  if(!drv)return sHome();
+  var h=sb();
+  h+='<div style="color:#fff;text-align:center;padding:14px 20px 16px;flex:1;display:flex;flex-direction:column;">'
+    +'<div style="font-size:12px;color:#00C853;font-weight:700;margin-bottom:4px;">✓ You arrived safely</div>'
+    +'<div style="font-size:20px;font-weight:900;margin-bottom:8px;">How was your ride?</div>'
+    +'<div style="font-size:12px;color:#555;margin-bottom:14px;">Tap a star to rate, then select what stood out. Your rating shapes your Familiar Drivers list.</div>'
+    +'<div style="display:flex;align-items:center;gap:14px;background:#141414;border-radius:16px;padding:12px 16px;margin-bottom:14px;text-align:left;">'
+    +photoEl(drv.id,58,G)
+    +'<div><div style="font-size:16px;font-weight:800;">'+esc(drv.name)+'</div>'
+    +'<div style="font-size:11px;color:#555;margin-top:2px;">'+esc(drv.badge)+' · '+esc(drv.car)+'</div></div></div>'
+    +'<div style="display:flex;justify-content:center;gap:8px;margin-bottom:6px;">';
+  for(var i=1;i<=5;i++){
+    h+='<div class="btn" data-action="rate" data-val="'+i+'" style="font-size:38px;color:'+(i<=(ST.ratingGiven||0)?'#FFB800':'#222')+';cursor:pointer;" id="star-'+i+'">★</div>';
+  }
+  h+='</div><div id="rlabel" style="font-size:12px;color:#555;min-height:16px;margin-bottom:14px;">'+((['','Terrible','Bad','OK','Good','Excellent!'][ST.ratingGiven||0])||'Tap a star to rate')+'</div>'
+    +'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;">';
+  var chips=['Great driving','Friendly','On time','Clean car','Helped with bags','Safe and smooth'];
+  for(var i=0;i<chips.length;i++){
+    h+='<div class="chip btn" data-action="chip" data-on="0" style="font-size:12px;color:#555;padding:6px 12px;border-radius:20px;border:0.5px solid #222;cursor:pointer;transition:all .15s;">'+chips[i]+'</div>';
+  }
+  h+='</div>'
+    +'<div style="margin-top:16px;">'
+    +'<button class="btn" id="submit-btn" data-action="submitRating" style="width:100%;background:'+(ST.ratingGiven?G:'#1a4a2a')+';border:none;border-radius:13px;padding:16px;color:'+(ST.ratingGiven?'#000':'#2a6a3a')+';font-size:15px;font-weight:900;cursor:pointer;display:block;box-sizing:border-box;margin-bottom:10px;">'+(ST.ratingGiven?'Submit Rating ✓':'Tap a star to rate')+'</button>'
+    +'<button class="btn" data-action="go" data-val="home" style="width:100%;background:none;border:0.5px solid #2a2a2a;border-radius:13px;padding:13px;color:#666;font-size:14px;font-weight:600;cursor:pointer;display:block;box-sizing:border-box;">Skip — Back to Home</button>'
+    +'</div>'
+    +'</div>';
+  return h;
+}
+
+function sHistory(){
+  var h=sb()+hdr('home','Trip history');
+  h+='<div style="padding:0 16px 22px;">';
+  h+='<div style="display:flex;align-items:flex-start;gap:10px;margin:0 16px 14px;background:#0a1c0d;border-radius:12px;padding:11px 13px;border:0.5px solid #1a3320;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><polyline points="20,6 9,17 4,12"/></svg><div><div style="font-size:12px;font-weight:700;color:#00C853;margin-bottom:2px;">Your trip history</div><div style="font-size:12px;color:#aaa;line-height:1.5;">Tap <b>Rebook</b> on any past trip to book the same route again instantly.</div></div></div>';
+  h+='<div style="font-size:11px;color:#444;margin-bottom:14px;">'+TRIPS.length+' trips total</div>';
+  for(var i=0;i<TRIPS.length;i++){
+    var t=TRIPS[i];var d=gD(t.driverId)||DRIVERS[0];
+    h+='<div style="background:#111;border-radius:14px;padding:13px;border:0.5px solid #1a1a1a;margin-bottom:10px;">'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'+photoEl(d.id,44,'#2a2a2a')
+      +'<div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+esc(d.name)+'</div><div style="font-size:11px;color:#555;">'+esc(t.date)+' · '+esc(t.time)+'</div></div>'
+      +'<div style="text-align:right;"><div style="font-size:14px;font-weight:800;">$'+t.fare.toFixed(2)+'</div><div style="font-size:10px;color:#555;">'+esc(t.type)+'</div></div></div>'
+      +'<div style="font-size:12px;color:#666;margin-bottom:3px;">📍 '+esc(t.from)+'</div>'
+      +'<div style="font-size:12px;color:#bbb;margin-bottom:9px;">🏁 '+esc(t.to)+'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+      +'<div style="display:flex;gap:2px;align-items:center;">'+starsHtml(t.yourRating,12)+'<span style="font-size:10px;color:#555;margin-left:4px;">'+esc(t.duration)+' · '+esc(t.distance)+'</span></div>'
+      +'<button class="btn" data-action="rebookTrip" data-val="'+t.id+'" style="background:#0a1c0d;border:none;border-radius:7px;padding:5px 11px;color:'+G+';font-size:11px;font-weight:700;cursor:pointer;">Rebook</button>'
+      +'</div></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function sFamiliarList(){
+  var fam=getFam();
+  var h=sb()+hdr('home','Familiar Drivers');
+  h+='<div style="padding:0 16px 22px;">'
+    +'<div style="background:#0a1c0d;border-radius:12px;padding:11px 13px;border:0.5px solid #1a3320;margin-bottom:15px;font-size:12px;color:#aaa;line-height:1.7;">'
+    +'From your <span style="color:'+G+';">trip history</span>. Sorted by <span style="color:'+G+';">your rating</span>. </div>';
+  for(var i=0;i<fam.length;i++){
+    var d=fam[i];var isTop=i===0;
+    var rc=d.yourRating>=5?G:d.yourRating>=4?'#FFB800':'#888';
+    h+='<div style="overflow:hidden;background:#111;border-radius:16px;padding:14px;border:'+(isTop?'1.5px solid '+G:'0.5px solid #1a1a1a')+';margin-bottom:13px;position:relative;overflow:hidden;">';
+    if(isTop)h+='<div style="position:absolute;top:0;left:0;right:0;height:2px;background:'+G+';opacity:.7;"></div>'
+      +'<div style="margin-bottom:10px;margin-top:4px;"><span style="background:#0a1c0d;border-radius:8px;padding:3px 10px;font-size:9px;font-weight:900;color:'+G+';">⭐ YOUR TOP PICK</span></div>';
+    h+='<div style="display:flex;align-items:flex-start;gap:12px;">'
+      +'<div style="position:relative;flex-shrink:0;">'+photoEl(d.id,isTop?72:62,isTop?G:d.yourRating>=4?'#2a5a2a':'#2a2a2a')
+      +'<div style="position:absolute;bottom:-1px;right:-4px;background:'+rc+';border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#000;border:2.5px solid #111;z-index:2;">'+d.yourRating+'</div></div>'
+      +'<div style="flex:1;">'
+      +'<div style="font-size:'+(isTop?17:15)+'px;font-weight:800;margin-bottom:3px;">'+esc(d.name)+'</div>'
+      +'<div style="font-size:11px;color:'+G+';margin-bottom:2px;">★ '+d.rating+' overall · '+esc(d.badge)+'</div>'
+      +'<div style="font-size:11px;color:#555;margin-bottom:5px;">'+esc(d.car)+' · '+esc(d.plate)+'</div>'
+      +'<div style="display:flex;gap:2px;align-items:center;margin-bottom:5px;">'+starsHtml(d.yourRating,14)+'<span style="font-size:11px;color:#888;margin-left:5px;">your rating · '+d.tripCount+' trip'+(d.tripCount!==1?'s':'')+'</span></div>'
+      +(d.lastTrip?'<div style="font-size:10px;color:#333;margin-bottom:8px;">Last: '+esc(d.lastTrip.to)+' · '+esc(d.lastTrip.date)+'</div>':'')
+      +(d.note?'<div style="font-size:11px;color:#555;background:#0a0a0a;border-radius:7px;padding:7px 10px;margin-bottom:10px;border:0.5px solid #1a1a1a;">"'+esc(d.note)+'"</div>':'')
+      +'<div style="display:flex;gap:8px;">'
+      +'<button class="btn" data-action="requestDriver" data-val="'+d.id+'" style="flex:2;background:'+G+';border:none;border-radius:9px;padding:10px;color:#000;font-size:13px;font-weight:800;cursor:pointer;">Request '+esc(d.name.split(' ')[0])+'</button>'
+      +'<button class="btn" data-action="rebookDriver" data-val="'+d.id+'" style="flex:1;background:none;border:0.5px solid #222;border-radius:9px;padding:10px;color:#aaa;font-size:12px;cursor:pointer;">Rebook</button>'
+      +'</div></div></div></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function sReplayList(){
+  var h=sb()
+    +hdr('home','Ride Replay','<button class="btn" data-action="startAddReplay" style="background:'+G+';border:none;border-radius:8px;padding:5px 12px;color:#000;font-size:12px;font-weight:800;cursor:pointer;">+ Add</button>');
+  h+='<div style="padding:0 16px 22px;">';
+  h+='<div style="display:flex;align-items:flex-start;gap:10px;margin:0 16px 14px;background:#0a1c0d;border-radius:12px;padding:11px 13px;border:0.5px solid #1a3320;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><polyline points="20,6 9,17 4,12"/></svg><div><div style="font-size:12px;font-weight:700;color:#00C853;margin-bottom:2px;">Your saved trips</div><div style="font-size:12px;color:#aaa;line-height:1.5;">Tap <b>Book Now</b> on any saved trip below to replay it instantly with your saved preferences.</div><div style="font-size:11px;color:#555;margin-top:3px;">New here? Tap + Add to save your first trip.</div></div></div>';
+  h+='<div style="font-size:11px;color:#444;margin-bottom:14px;">'+ST.replays.length+' saved — one tap to rebook.</div>';
+  if(!ST.replays.length)h+='<div style="text-align:center;padding:40px 0;color:#444;"><button class="btn" data-action="startAddReplay" style="background:'+G+';border:none;border-radius:12px;padding:14px;color:#000;font-size:14px;font-weight:800;cursor:pointer;display:block;margin-top:14px;box-sizing:border-box;width:100%;">+ Create Replay</button></div>';
+  for(var i=0;i<ST.replays.length;i++){
+    var r=ST.replays[i];var drv=gD(r.driverId);
+    var isC=ST.confirmDelete&&ST.confirmDelete.type==='replay'&&ST.confirmDelete.id===r.id;
+    var prefMap={frontSeat:'Front seat',quiet:'Quiet',noRush:'No rush',assisted:'Assisted',acOn:'AC',musicOff:'No music',childSeat:'Child seat'};
+    var labs=[];for(var k in r.prefs){if(r.prefs[k]&&prefMap[k])labs.push(prefMap[k]);}
+    h+='<div style="background:#111;border-radius:15px;padding:14px;border:0.5px solid #1a1a1a;margin-bottom:12px;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">'
+      +'<div><div style="font-size:15px;font-weight:800;">'+esc(r.name)+'</div><div style="font-size:11px;color:#555;margin-top:2px;">'+(esc(r.schedule)||'No schedule')+'</div></div>'
+      +'<div><button class="btn" data-action="editReplay" data-val="'+r.id+'" style="color:'+G+';font-size:12px;padding:4px 7px;">✏</button>'
+      +'<button class="btn" data-action="setConf" data-type="replay" data-val="'+r.id+'" style="color:'+(isC?'#e05050':'#555')+';font-size:12px;padding:4px 7px;">✕</button></div></div>'
+      +(isC?confBar('replay',r.id,'Delete "'+esc(r.name)+'"?'):'')
+      +'<div style="font-size:12px;color:#666;margin-bottom:3px;">📍 '+(esc(r.from)||'Pickup not set')+'</div>'
+      +'<div style="font-size:12px;color:#bbb;margin-bottom:10px;">🏁 '+(esc(r.to)||'Destination not set')+'</div>'
+      +(labs.length?'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;">'+labs.map(function(l){return '<span style="background:#1a1a1a;color:#777;font-size:10px;padding:3px 8px;border-radius:5px;">'+l+'</span>';}).join('')+'</div>':'')
+      +(drv?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'+photoEl(drv.id,26,G)+'<span style="font-size:11px;color:'+G+';">'+esc(drv.name)+' · ★'+drv.yourRating+'/5</span></div>':'')
+      +(r.notes?'<div style="font-size:11px;color:#555;padding:7px 10px;background:#1a1a1a;border-radius:7px;margin-bottom:10px;">"'+esc(r.notes)+'"</div>':'')
+      +'<div style="display:flex;gap:8px;">'
+      +'<button class="btn" data-action="bookReplayById" data-val="'+r.id+'" style="flex:2;background:'+G+';border:none;border-radius:10px;padding:11px;color:#000;font-size:13px;font-weight:800;cursor:pointer;">Book Now</button>'
+      +'<button class="btn" data-action="editReplay" data-val="'+r.id+'" style="flex:1;background:none;border:0.5px solid #2a2a2a;border-radius:10px;padding:11px;color:#aaa;font-size:12px;cursor:pointer;">Edit</button>'
+      +'</div></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function sReplayForm(){
+  var r=ST.editingId?(function(){for(var i=0;i<ST.replays.length;i++){if(ST.replays[i].id===ST.editingId)return ST.replays[i];}return {};})():{};
+  var fam=getFam();
+  var dOpts=[['','Any driver']];
+  for(var i=0;i<fam.length;i++)dOpts.push([fam[i].id,fam[i].name+' ★'+fam[i].yourRating+'/5']);
+  var h=sb()+hdr('replay_list',ST.editingId?'Edit Replay':'New Replay');
+  h+='<div style="padding:0 16px 24px;">';
+  if(!ST.editingId){h+='<div style="display:flex;align-items:flex-start;gap:10px;margin:0 16px 14px;background:#0a1c0d;border-radius:12px;padding:11px 13px;border:0.5px solid #1a3320;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><polyline points="20,6 9,17 4,12"/></svg><div><div style="font-size:12px;font-weight:700;color:#00C853;margin-bottom:2px;">Creating a new replay</div><div style="font-size:12px;color:#aaa;line-height:1.5;">Fill in your destination and preferences below. Next time, you can book this exact trip in one tap.</div></div></div>';}
+  h+=fld('NAME',inpEl('f-name',r.name||''))
+    +fld('PICKUP',inpEl('f-from',r.from||''))
+    +fld('DESTINATION',inpEl('f-to',r.to||''))
+    +fld('SCHEDULE',inpEl('f-schedule',r.schedule||'','e.g. Every Thu 10 AM'))
+    +'<div style="font-size:10px;color:#555;font-weight:700;letter-spacing:.9px;margin-bottom:8px;">RIDE PREFERENCES</div>'
+    +'<div id="pref-section">'+rPrefs()+'</div>'
+    +fld('PREFERRED DRIVER',selEl('f-driver',dOpts,r.driverId||''),13)
+    +fld('VEHICLE',selEl('f-vehicle',[['','Any'],['uberx','UberX'],['comfort','Comfort'],['uberxl','UberXL'],['black','Black'],['pet','Pet'],['accessible','Accessible']],r.vehicle||''),13)
+    +fld('PAYMENT',selEl('f-payment',[['card','💳 Card'],['cash','💵 Cash'],['uber_cash','🟢 Uber Cash'],['apple_pay','🍎 Apple Pay']],r.payment||'card'),13)
+    +fld('NOTES',taEl('f-notes',r.notes||'','e.g. Help with bags'),13)
+    +'<button class="btn" data-action="saveReplay" style="width:100%;background:'+G+';border:none;border-radius:12px;padding:14px;color:#000;font-size:14px;font-weight:800;cursor:pointer;display:block;margin-top:14px;box-sizing:border-box;">Save Replay</button>'
+    +'<button class="btn" data-action="go" data-val="replay_list" style="width:100%;background:none;border:0.5px solid #2a2a2a;border-radius:12px;padding:14px;color:#777;font-size:14px;cursor:pointer;display:block;margin-top:8px;">Cancel</button>'
+    +'</div>';
+  return h;
+}
+
+function sFamily(){
+  var h=sb()
+    +hdr('home','Family Plan','<button class="btn" data-action="startAddMember" style="background:'+G+';border:none;border-radius:8px;padding:5px 12px;color:#000;font-size:12px;font-weight:800;cursor:pointer;">+ Member</button>');
+  h+='<div style="padding:0 16px 22px;">';
+  h+='<div style="display:flex;align-items:flex-start;gap:10px;margin:0 16px 14px;background:#0a1c0d;border-radius:12px;padding:11px 13px;border:0.5px solid #1a3320;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><polyline points="20,6 9,17 4,12"/></svg><div><div style="font-size:12px;font-weight:700;color:#00C853;margin-bottom:2px;">Booking for a loved one</div><div style="font-size:12px;color:#aaa;line-height:1.5;">Add a family member, then tap <b>+ Add Appointment</b> to schedule their ride. They will get a text message with the driver details — no app required.</div><div style="font-size:11px;color:#555;margin-top:3px;">Tap ✏ to edit any appointment or member.</div></div></div>';
+  if(!ST.members.length)h+='<button class="btn" data-action="startAddMember" style="width:100%;background:'+G+';border:none;border-radius:12px;padding:14px;color:#000;font-size:14px;font-weight:800;cursor:pointer;display:block;margin-top:14px;box-sizing:border-box;">+ Add Member</button>';
+  for(var i=0;i<ST.members.length;i++){
+    var m=ST.members[i];
+    var appts=[];for(var j=0;j<ST.appointments.length;j++){if(ST.appointments[j].memberId===m.id)appts.push(ST.appointments[j]);}
+    var isC=ST.confirmDelete&&ST.confirmDelete.type==='member'&&ST.confirmDelete.id===m.id;
+    h+='<div style="background:#111;border-radius:15px;padding:14px;border:0.5px solid #1a1a1a;margin-bottom:14px;">'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:13px;">'
+      +'<div style="width:46px;height:46px;border-radius:50%;background:#0d2b18;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:'+G+';flex-shrink:0;">'+esc(m.name.charAt(0))+'</div>'
+      +'<div style="flex:1;"><div style="font-size:15px;font-weight:800;">'+esc(m.name)+'</div>'
+      +'<div style="font-size:11px;color:#555;">'+esc(m.relation)+(m.age?' · '+m.age+' yrs':'')+(m.smsOnly?' · SMS only':'')+'</div>'
+      +(m.phone?'<div style="font-size:11px;color:#444;">'+esc(m.phone)+'</div>':'')+'</div>'
+      +'<div><button class="btn" data-action="editMember" data-val="'+m.id+'" style="color:'+G+';font-size:12px;padding:4px 7px;">✏</button>'
+      +'<button class="btn" data-action="setConf" data-type="member" data-val="'+m.id+'" style="color:'+(isC?'#e05050':'#555')+';font-size:12px;padding:4px 7px;">✕</button></div></div>'
+      +(isC?confBar('member',m.id,'Remove '+esc(m.name)+'?'):'')
+      +'<div style="font-size:10px;color:#444;font-weight:700;letter-spacing:.9px;margin-bottom:9px;">APPOINTMENTS ('+appts.length+')</div>';
+    for(var j=0;j<appts.length;j++){
+      var a=appts[j];var isAC=ST.confirmDelete&&ST.confirmDelete.type==='appt'&&ST.confirmDelete.id===a.id;var drv=gD(a.driverId);
+      h+='<div style="background:#1a1a1a;border-radius:11px;padding:12px;margin-bottom:8px;border:0.5px solid #252525;">'
+        +'<div style="display:flex;justify-content:space-between;margin-bottom:5px;">'
+        +'<div><div style="font-size:13px;font-weight:700;">'+esc(a.title)+'</div><div style="font-size:11px;color:#555;">'+esc(a.date)+' · '+esc(a.time)+'</div></div>'
+        +'<div><button class="btn" data-action="editAppt" data-val="'+a.id+'" style="color:'+G+';font-size:12px;padding:4px 7px;">✏</button>'
+        +'<button class="btn" data-action="setConf" data-type="appt" data-val="'+a.id+'" style="color:'+(isAC?'#e05050':'#555')+';font-size:12px;padding:4px 7px;">✕</button></div></div>'
+        +(isAC?confBar('appt',a.id,'Delete appointment?'):'')
+        +'<div style="font-size:11px;color:#666;margin-bottom:7px;">'+(a.from?'📍 '+esc(a.from)+' → ':'')+esc(a.to)+'</div>'
+        +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">'
+        +(a.senior?pill('Senior Ride','#6fc','#0d2b18'):'')+(a.smsAlert?pill('Text message','#aaa','#222'):'')+(a.autoNotify?pill('Auto-notify','#aaa','#222'):'')
+        +(drv?'<div style="display:flex;align-items:center;gap:5px;">'+photoEl(drv.id,18,G)+'<span style="font-size:10px;color:'+G+';">'+esc(drv.name)+'</span></div>':'')
+        +'</div>'
+        +'<button class="btn" data-action="bookApptById" data-val="'+a.id+'" style="width:100%;background:'+G+';border:none;border-radius:8px;padding:9px;color:#000;font-size:12px;font-weight:800;cursor:pointer;display:block;">Book Ride Now</button>'
+        +'</div>';
+    }
+    h+='<button class="btn" data-action="startAddAppt" data-val="'+m.id+'" style="width:100%;background:none;border:0.5px dashed #2a2a2a;border-radius:10px;padding:9px;color:#444;font-size:12px;cursor:pointer;display:block;margin-top:3px;">+ Add Appointment</button>'
+      +'</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function sMemberForm(){
+  var m=ST.editingId?(function(){for(var i=0;i<ST.members.length;i++){if(ST.members[i].id===ST.editingId)return ST.members[i];}return {};})():{};
+  var h=sb()+hdr('family',ST.editingId?'Edit Member':'Add Member');
+  h+='<div style="padding:0 16px 24px;">';
+  if(!ST.editingId){h+='<div style="display:flex;align-items:flex-start;gap:10px;margin:0 16px 14px;background:#0a1c0d;border-radius:12px;padding:11px 13px;border:0.5px solid #1a3320;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><polyline points="20,6 9,17 4,12"/></svg><div><div style="font-size:12px;font-weight:700;color:#00C853;margin-bottom:2px;">Adding a family member</div><div style="font-size:12px;color:#aaa;line-height:1.5;">Enter their details so you can book rides for them. They will receive text message updates — no app required.</div></div></div>';}
+  h+=fld('FULL NAME',inpEl('m-name',m.name||''))
+    +fld('RELATION',selEl('m-rel',[['','Relation...'],['Mom','Mom'],['Dad','Dad'],['Grandma','Grandma'],['Grandpa','Grandpa'],['Partner','Partner'],['Child','Child'],['Sibling','Sibling'],['Other','Other']],m.relation||''),13)
+    +fld('AGE',inpEl('m-age',m.age||'','','number'),13)
+    +fld('PHONE',inpEl('m-phone',m.phone||''))
+    +fld('ADDRESS',inpEl('m-addr',m.address||''))
+    +simpTog('smsOnly','Text Message Mode','They get text updates — no app needed')
+    +'<button class="btn" data-action="saveMember" style="width:100%;background:'+G+';border:none;border-radius:12px;padding:14px;color:#000;font-size:14px;font-weight:800;cursor:pointer;display:block;margin-top:14px;box-sizing:border-box;">Save Member</button>'
+    +'<button class="btn" data-action="go" data-val="family" style="width:100%;background:none;border:0.5px solid #2a2a2a;border-radius:12px;padding:14px;color:#777;font-size:14px;cursor:pointer;display:block;margin-top:8px;">Cancel</button>'
+    +'</div>';
+  return h;
+}
+
+function sApptForm(){
+  var a=ST.editingId?(function(){for(var i=0;i<ST.appointments.length;i++){if(ST.appointments[i].id===ST.editingId)return ST.appointments[i];}return {memberId:ST.formMemberId};})():{memberId:ST.formMemberId};
+  var member=gM(a.memberId||ST.formMemberId);
+  var fam=getFam();
+  var dOpts=[['','Any available driver']];
+  for(var i=0;i<fam.length;i++)dOpts.push([fam[i].id,fam[i].name+' ★'+fam[i].yourRating+'/5']);
+  var h=sb()+hdr('family',ST.editingId?'Edit Appointment':'Add Appointment');
+  h+='<div style="padding:0 16px 24px;">';
+  if(!ST.editingId){h+='<div style="display:flex;align-items:flex-start;gap:10px;margin:0 16px 14px;background:#0a1c0d;border-radius:12px;padding:11px 13px;border:0.5px solid #1a3320;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><polyline points="20,6 9,17 4,12"/></svg><div><div style="font-size:12px;font-weight:700;color:#00C853;margin-bottom:2px;">Scheduling an appointment</div><div style="font-size:12px;color:#aaa;line-height:1.5;">Fill in the appointment details. We will match the best driver and send your family member a text with their ride info.</div></div></div>';}
+  h+=(member?'<div style="background:#0a1c0d;border-radius:10px;padding:9px 13px;border:0.5px solid #1a3320;margin-bottom:14px;font-size:12px;color:'+G+';">For: <b>'+esc(member.name)+'</b></div>':'')
+    +fld('TITLE',inpEl('a-title',a.title||''))
+    +fld('TYPE',selEl('a-type',[['','Type...'],['doctors','Doctor'],['dental','Dental'],['pharmacy','Pharmacy'],['therapy','Therapy'],['grocery','Grocery'],['other','Other']],a.type||''),13)
+    +fld('DATE',inpEl('a-date',a.date||''))
+    +fld('TIME',inpEl('a-time',a.time||''))
+    +fld('PICKUP FROM',inpEl('a-from',a.from||(member&&member.address)||''))
+    +fld('DESTINATION',inpEl('a-to',a.to||''))
+    +fld('PREFERRED DRIVER',selEl('a-driver',dOpts,a.driverId||''),13)
+    +'<div style="font-size:10px;color:#555;font-weight:700;letter-spacing:.9px;margin-bottom:8px;">RIDE OPTIONS</div>'
+    +'<div id="pref-section">'+aPrefs()+'</div>'
+    +'<button class="btn" data-action="saveAppt" style="width:100%;background:'+G+';border:none;border-radius:12px;padding:14px;color:#000;font-size:14px;font-weight:800;cursor:pointer;display:block;margin-top:14px;box-sizing:border-box;">Save Appointment</button>'
+    +'<button class="btn" data-action="go" data-val="family" style="width:100%;background:none;border:0.5px solid #2a2a2a;border-radius:12px;padding:14px;color:#777;font-size:14px;cursor:pointer;display:block;margin-top:8px;">Cancel</button>'
+    +'</div>';
+  return h;
+}
+
+// ── Render ────────────────────────────────────────────
+var SCREENS={
+  home:sHome,search:sSearch,ride_options:sRideOptions,wizard_driver:sWizardDriver,confirm_ride:sConfirmRide,
+  tracking:sTracking,rating:sRating,history:sHistory,familiar_list:sFamiliarList,
+  replay_list:sReplayList,replay_form:sReplayForm,family:sFamily,member_form:sMemberForm,appt_form:sApptForm
+};
+var TAB_MAP={
+  home:'home',search:'home',ride_options:'home',confirm_ride:'home',tracking:'home',rating:'home',
+  history:'history',familiar_list:'familiar_list',replay_list:'replay_list',replay_form:'replay_list',
+  family:'family',member_form:'family',appt_form:'family'
+};
+
+function go(s){
+  SCREEN=s;
+  var el=document.getElementById('screen');
+  el.innerHTML='<div class="sc" style="color:#fff;">'+(SCREENS[s]?SCREENS[s]():'')+'</div>';
+  el.scrollTop=0;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.dataset.s===(TAB_MAP[s]||'home'));});
+}
+
+// ── Single delegated click handler ────────────────────
+document.getElementById('screen').addEventListener('click',function(e){
+  var el=e.target;
+  while(el&&el!==this){
+    if(el.dataset&&el.dataset.action)break;
+    el=el.parentElement;
+  }
+  if(!el||!el.dataset||!el.dataset.action)return;
+  var act=el.dataset.action;
+  var val=el.dataset.val;
+  var idx=el.dataset.idx;
+  var type=el.dataset.type;
+  var id=el.dataset.id?parseInt(el.dataset.id):null;
+  var pref=el.dataset.pref;
+
+  if(act==='go'){go(val);}
+  else if(act==='startRide'){ST.searchFrom=val;go('search');}
+  else if(act==='selectDest'){ST.searchTo=TRIPS[parseInt(idx)].to;go('ride_options');}
+  else if(act==='selectPlace'){ST.searchTo=PLACES[parseInt(idx)];go('ride_options');}
+  else if(act==='selectRide'){ST.selectedType=val;go('ride_options');}
+  else if(act==='toggleMoreRides'){ST.showMoreRides=!ST.showMoreRides;go('ride_options');}
+  else if(act==='rebookTrip'){
+    var tid=parseInt(val);
+    for(var i=0;i<TRIPS.length;i++){if(TRIPS[i].id===tid){ST.searchFrom=TRIPS[i].from;ST.searchTo=TRIPS[i].to;go('ride_options');break;}}
+  }
+  else if(act==='rebookDriver'){ST.trackingDriverId=parseInt(val);ST.pendingRating=parseInt(val);go('tracking');}
+  else if(act==='requestDriver'){ST.trackingDriverId=parseInt(val);ST.pendingRating=parseInt(val);go('tracking');}
+  else if(act==='requestDriverConfirm'){ST.trackingDriverId=parseInt(val);ST.pendingRating=parseInt(val);go('tracking');}
+  else if(act==='replayBook'){var rp=ST.replays[0];if(rp&&rp.driverId)ST.trackingDriverId=rp.driverId;go('tracking');}
+  else if(act==='bookReplayById'){
+    var rid=parseInt(val);
+    for(var i=0;i<ST.replays.length;i++){if(ST.replays[i].id===rid){var rp2=ST.replays[i];if(rp2.driverId)ST.trackingDriverId=rp2.driverId;break;}}
+    go('tracking');
+  }
+  else if(act==='bookApptById'){
+    var aid=parseInt(val);
+    for(var i=0;i<ST.appointments.length;i++){if(ST.appointments[i].id===aid){var ap2=ST.appointments[i];if(ap2.driverId)ST.trackingDriverId=ap2.driverId;break;}}
+    go('tracking');
+  }
+  else if(act==='endRide'){ST.pendingRating=ST.trackingDriverId||DRIVERS[0].id;ST.ratingGiven=0;go('rating');}
+  else if(act==='rate'){
+    ST.ratingGiven=parseInt(val);
+    for(var i=1;i<=5;i++){var s=document.getElementById('star-'+i);if(s)s.style.color=i<=ST.ratingGiven?'#FFB800':'#222';}
+    var lb=document.getElementById('rlabel');if(lb)lb.textContent=['','Terrible','Bad','OK','Good','Excellent!'][ST.ratingGiven]||'';
+    var sbtn=document.getElementById('submit-btn');
+    if(sbtn){sbtn.textContent='Submit Rating ✓';sbtn.style.background='#00C853';sbtn.style.color='#000';}
+  }
+  else if(act==='submitRating'){
+    if(ST.pendingRating&&ST.ratingGiven){var d=gD(ST.pendingRating);if(d)d.yourRating=ST.ratingGiven;}
+    ST.pendingRating=null;ST.ratingGiven=0;go('home');
+  }
+  else if(act==='chip'){
+    var on=el.dataset.on==='1';el.dataset.on=on?'0':'1';
+    el.style.background=!on?'#0a1c0d':'';el.style.borderColor=!on?G:'#222';el.style.color=!on?G:'#555';
+  }
+  else if(act==='verify'){
+    ST.plateVerified=!ST.plateVerified;
+    var btn=document.getElementById('vbtn'),txt=document.getElementById('vtxt');
+    if(btn&&txt){btn.style.background=ST.plateVerified?'#1a3320':'#2a0d0d';txt.textContent=ST.plateVerified?'Verified ✓':'Verify';txt.style.color=ST.plateVerified?G:'#e05050';}
+  }
+  else if(act==='quiet'){
+    ST.quietOn=!ST.quietOn;var qb=document.getElementById('qbtn');if(qb)qb.textContent='🔇 Quiet: '+(ST.quietOn?'ON':'OFF');
+  }
+  else if(act==='sos'){
+    var sb=document.getElementById('sosbtn');if(sb){sb.textContent='SENT ✓';setTimeout(function(){if(sb)sb.textContent='SOS';},2500);}
+  }
+  else if(act==='tog'||act==='pref'||(el.classList&&el.classList.contains('tog'))){
+    if(pref){ST.formPrefs[pref]=!ST.formPrefs[pref];var ps=document.getElementById('pref-section');if(ps)ps.innerHTML=SCREEN==='replay_form'?rPrefs():SCREEN==='appt_form'?aPrefs():rPrefs();}
+  }
+  else if(act==='setConf'){ST.confirmDelete={type:type,id:parseInt(val)};go(SCREEN);}
+  else if(act==='cancelDel'){ST.confirmDelete=null;go(SCREEN);}
+  else if(act==='del'){
+    var dtype=type;var did=id;
+    if(dtype==='replay'){for(var i=0;i<ST.replays.length;i++){if(ST.replays[i].id===did){ST.replays.splice(i,1);break;}}}
+    else if(dtype==='member'){
+      for(var i=0;i<ST.members.length;i++){if(ST.members[i].id===did){ST.members.splice(i,1);break;}}
+      ST.appointments=ST.appointments.filter(function(a){return a.memberId!==did;});
+    }
+    else if(dtype==='appt'){for(var i=0;i<ST.appointments.length;i++){if(ST.appointments[i].id===did){ST.appointments.splice(i,1);break;}}}
+    ST.confirmDelete=null;
+    go(dtype==='member'||dtype==='appt'?'family':'replay_list');
+  }
+  else if(act==='startAddReplay'){ST.editingId=null;ST.formPrefs={frontSeat:false,quiet:false,noRush:false,assisted:false,acOn:false,musicOff:false,childSeat:false};go('replay_form');}
+  else if(act==='editReplay'){
+    ST.editingId=parseInt(val);
+    for(var i=0;i<ST.replays.length;i++){if(ST.replays[i].id===ST.editingId){var rp=ST.replays[i];ST.formPrefs=Object.assign({},rp.prefs);break;}}
+    go('replay_form');
+  }
+  else if(act==='saveReplay'){
+    var n=(document.getElementById('f-name')||{}).value;if(!n||!n.trim())return;
+    var rd={name:n.trim(),from:(document.getElementById('f-from').value||'').trim(),to:(document.getElementById('f-to').value||'').trim(),
+      schedule:(document.getElementById('f-schedule').value||'').trim(),prefs:Object.assign({},ST.formPrefs),
+      driverId:parseInt(document.getElementById('f-driver').value)||null,
+      vehicle:document.getElementById('f-vehicle').value,payment:document.getElementById('f-payment').value,
+      notes:(document.getElementById('f-notes').value||'').trim()};
+    if(ST.editingId){for(var i=0;i<ST.replays.length;i++){if(ST.replays[i].id===ST.editingId){Object.assign(ST.replays[i],rd);break;}}}
+    else ST.replays.push(Object.assign({id:Date.now()},rd));
+    ST.editingId=null;go('replay_list');
+  }
+  else if(act==='startAddMember'){ST.editingId=null;ST.formPrefs={smsOnly:false};go('member_form');}
+  else if(act==='editMember'){ST.editingId=parseInt(val);for(var i=0;i<ST.members.length;i++){if(ST.members[i].id===ST.editingId){ST.formPrefs={smsOnly:ST.members[i].smsOnly||false};break;}}go('member_form');}
+  else if(act==='saveMember'){
+    var n=(document.getElementById('m-name')||{}).value;if(!n||!n.trim())return;
+    var md={name:n.trim(),relation:document.getElementById('m-rel').value,age:parseInt(document.getElementById('m-age').value)||null,
+      phone:(document.getElementById('m-phone').value||'').trim(),address:(document.getElementById('m-addr').value||'').trim(),smsOnly:ST.formPrefs.smsOnly};
+    if(ST.editingId){for(var i=0;i<ST.members.length;i++){if(ST.members[i].id===ST.editingId){Object.assign(ST.members[i],md);break;}}}
+    else ST.members.push(Object.assign({id:Date.now()},md));
+    ST.editingId=null;go('family');
+  }
+  else if(act==='startAddAppt'){ST.editingId=null;ST.formMemberId=parseInt(val);ST.formPrefs={senior:true,smsAlert:true,autoNotify:true};go('appt_form');}
+  else if(act==='editAppt'){
+    ST.editingId=parseInt(val);
+    for(var i=0;i<ST.appointments.length;i++){if(ST.appointments[i].id===ST.editingId){var ap=ST.appointments[i];ST.formPrefs={senior:ap.senior,smsAlert:ap.smsAlert,autoNotify:ap.autoNotify};ST.formMemberId=ap.memberId;break;}}
+    go('appt_form');
+  }
+  else if(act==='saveAppt'){
+    var t=(document.getElementById('a-title')||{}).value;if(!t||!t.trim())return;
+    var ad={memberId:ST.formMemberId,title:t.trim(),type:document.getElementById('a-type').value,
+      date:(document.getElementById('a-date').value||'').trim(),time:(document.getElementById('a-time').value||'').trim(),
+      from:(document.getElementById('a-from').value||'').trim(),to:(document.getElementById('a-to').value||'').trim(),
+      driverId:parseInt(document.getElementById('a-driver').value)||null,
+      senior:ST.formPrefs.senior,smsAlert:ST.formPrefs.smsAlert,autoNotify:ST.formPrefs.autoNotify};
+    if(ST.editingId){for(var i=0;i<ST.appointments.length;i++){if(ST.appointments[i].id===ST.editingId){Object.assign(ST.appointments[i],ad);break;}}}
+    else ST.appointments.push(Object.assign({id:Date.now()},ad));
+    ST.editingId=null;go('family');
+  }
+});
+
+// Handle tog clicks (pref toggles)
+document.getElementById('screen').addEventListener('click',function(e){
+  var el=e.target;
+  while(el&&el!==this){
+    if(el.classList&&el.classList.contains('tog'))break;
+    el=el.parentElement;
+  }
+  if(!el||!el.classList||!el.classList.contains('tog'))return;
+  var pref=el.dataset.pref;
+  if(!pref)return;
+  ST.formPrefs[pref]=!ST.formPrefs[pref];
+  var ps=document.getElementById('pref-section');
+  if(ps)ps.innerHTML=SCREEN==='replay_form'?rPrefs():aPrefs();
+},true);
+
+// Search input handler
+document.getElementById('screen').addEventListener('input',function(e){
+  if(e.target&&e.target.id==='st'){
+    var v=e.target.value;
+    var sugg=document.getElementById('sugg');
+    if(!sugg||!v)return;
+    var matches=[];
+    for(var i=0;i<PLACES.length;i++){if(PLACES[i].toLowerCase().indexOf(v.toLowerCase())>=0)matches.push(i);}
+    if(!matches.length)return;
+    var h='<div style="font-size:10px;color:#444;font-weight:700;letter-spacing:.8px;margin-bottom:9px;">RESULTS</div>';
+    for(var i=0;i<Math.min(6,matches.length);i++){
+      var pi=matches[i];
+      h+='<div class="btn" data-action="selectPlace" data-idx="'+pi+'" style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:0.5px solid #111;cursor:pointer;">'
+        +'<div style="width:34px;height:34px;background:#141414;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">📍</div>'
+        +'<div><div style="font-size:13px;font-weight:600;color:#fff;">'+esc(PLACES[pi])+'</div><div style="font-size:11px;color:#444;">Champaign, IL</div></div></div>';
+    }
+    sugg.innerHTML=h;
+  }
+});
+
+// Init tabs
+[['home','Home'],['history','Trips'],['replay_list','Replay'],['familiar_list','Drivers'],['family','Family']].forEach(function(x){
+  var b=document.createElement('button');b.className='tab'+(x[0]==='home'?' on':'');
+  b.dataset.s=x[0];b.textContent=x[1];
+  b.onclick=function(){go(x[0]);};
+  document.getElementById('tabs').appendChild(b);
+});
+
+go('home');
+</script>
+</body>
+</html>
